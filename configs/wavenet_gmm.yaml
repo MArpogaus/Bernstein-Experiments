@@ -1,0 +1,34 @@
+seed: !store [seed, 42]
+name: &name wavenet_gmm
+
+data_loader: !!python/name:thesis.data.cer_data_loader.load_data
+data_loader_kwds: !include shared/data_loader_kwds.yaml
+
+model_checkpoints: !join 
+  - !store 
+    - base_path
+    - !join
+      - ./logs/
+      - *name
+  - '/mcp'
+
+model: !!python/object/apply:thesis.models.wavenet_cnn.build_model
+  kwds:
+    input_shape: !!python/tuple [!sum [$history_size, $horizon_size], 3]
+    output_shape: !!python/tuple [$horizon_size, 3, &components 3]
+    conv_layers: !include shared/wavenet_conv_layers.yaml
+    hidden_layers: []
+    batch_normalization: false
+    name: *name
+
+compile_kwds:
+  loss: !!python/object/apply:thesis.losses.MixtedDensityLoss {}
+  optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
+    kwds:
+      lr: !store [lr, 0.00001]
+
+fit_kwds:
+  epochs: 50
+  shuffle: True
+  validation_freq: 1
+  callbacks: !include shared/callbacks.yaml
