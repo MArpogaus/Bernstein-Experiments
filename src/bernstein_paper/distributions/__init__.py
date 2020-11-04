@@ -1,2 +1,3 @@
 from .multivariate_bernstein_flow import MultivariateBernsteinFlow
 from .mixed_normal import MixedNormal
+from .normal_distribution import NormalDistribution

@@ -1,0 +1,33 @@
+seed: !store [seed, 42]
+name: &name feed_forward_bernstein_flow
+
+data_loader: !!python/name:bernstein_paper.data.cer_data_loader.load_data
+data_loader_kwds: !include shared/data_loader_kwds.yaml
+
+model_checkpoints: !join 
+  - !store 
+    - base_path
+    - !join
+      - ./logs/
+      - *name
+  - '/mcp'
+
+model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
+  kwds:
+    input_shape: !!python/tuple [!sum [$history_size, $horizon_size], 3]
+    output_shape: !!python/tuple [$horizon_size, 2]
+    hidden_layers: !include shared/feed_forward_hidden_layers.yaml
+    batch_normalization: true
+    name: *name
+
+compile_kwds:
+  loss: !!python/object/apply:bernstein_paper.losses.NormalDistributionLoss {}
+  optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
+    kwds:
+      lr: !store [lr, 0.001]
+
+fit_kwds:
+  epochs: 150
+  shuffle: True
+  validation_freq: 1
+  callbacks: !include shared/callbacks.yaml
