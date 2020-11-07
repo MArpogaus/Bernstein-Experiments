@@ -52,7 +52,7 @@ class TimeSeriesSplit():
         right = days[int(len(days) * self.split_size)]
         left = right - 1
         if self.split == self.LEFT:
-            return data[:str(left)]
+            return data.loc[:str(left)]
         else:
-            return data[str(right):]
+            return data.loc[str(right):]
 

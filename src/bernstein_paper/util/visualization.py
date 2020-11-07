@@ -88,7 +88,7 @@ def plot_patches(ds,
 
     for n in range(N):
         x = x_patches[n]
-        x_ch = x.shape[1]
+        x_ch = x.shape[-1]
 
         x = x.reshape(-1, x_hdim, x_ch)
 
