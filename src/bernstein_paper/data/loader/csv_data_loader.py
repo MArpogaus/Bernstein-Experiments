@@ -37,16 +37,14 @@
 import pandas as pd
 
 
-def _read_csv_file(file_path, columns, **kwds):
+def _read_csv_file(file_path, **kwds):
     file_path = file_path
     load_data = pd.read_csv(file_path,
                             parse_dates=['date_time'],
                             infer_datetime_format=True,
                             index_col=['date_time'],
-                            usecols=['date_time'] + columns,
                             **kwds)
 
-    # merge with weather data
     if load_data.isnull().any().sum() != 0:
         raise ValueError('Data contains NaNs')
 
@@ -54,12 +52,10 @@ def _read_csv_file(file_path, columns, **kwds):
 
 
 class CSVDataLoader():
-    def __init__(self, file_path, columns, **kwds):
+    def __init__(self, file_path, **kwds):
         self.file_path = file_path
-        self.columns = columns
         self.kwds = kwds
 
     def __call__(self):
         return _read_csv_file(self.file_path,
-                              self.columns,
                               **self.kwds)

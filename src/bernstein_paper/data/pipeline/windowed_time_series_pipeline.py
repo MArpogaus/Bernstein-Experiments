@@ -64,16 +64,16 @@ class PatchGenerator():
 class BatchPreprocessor():
 
     def __init__(self, history_size,
-                 historic_columns,
-                 horizon_columns,
+                 history_columns,
+                 meta_columns,
                  prediction_columns):
         self.history_size = history_size
-        self.historic_columns = historic_columns
-        self.horizon_columns = horizon_columns
+        self.history_columns = history_columns
+        self.meta_columns = meta_columns
         self.prediction_columns = prediction_columns
 
         columns = sorted(
-            list(set(historic_columns + prediction_columns + horizon_columns)))
+            list(set(history_columns + prediction_columns + meta_columns)))
         self.column_idx = {c: i for i, c in enumerate(columns)}
 
     def __call__(self, batch):
@@ -81,42 +81,33 @@ class BatchPreprocessor():
                       for c in sorted(self.prediction_columns)], axis=2)
 
         x_hist = []
-        x_hori = []
-        x_columns = sorted(set(self.historic_columns + self.horizon_columns))
+        x_meta = []
+
+        x_columns = sorted(set(self.history_columns + self.meta_columns))
+
         if len(x_columns) == 0:
             ValueError('No feature columns provided')
 
         for ch in x_columns:
             p = batch[:, :self.history_size, self.column_idx[ch]]
-            if ch in self.historic_columns:
+            if ch in self.history_columns:
                 x_hist.append(p)
-            else:
-                x_hist.append(tf.zeros_like(p))
-            p = batch[:, self.history_size:, self.column_idx[ch]]
-            if ch in self.horizon_columns:
-                x_hori.append(p)
-            else:
-                x_hori.append(tf.zeros_like(p))
+            p = batch[:, :1, self.column_idx[ch]]
+            if ch in self.meta_columns:
+                x_meta.append(p)
 
         x_hist = tf.stack(x_hist, axis=2)
-        x_hori = tf.stack(x_hori, axis=2)
+        x_meta = tf.stack(x_meta, axis=2)
 
-        if len(self.historic_columns) == 0:
-            x = x_hori
-        elif len(self.horizon_columns) == 0:
-            x = x_hist
-        else:
-            x = tf.concat([x_hist, x_hori], axis=1)
-
-        return x, y
+        return (x_hist, x_meta), y
 
 
 class WindowedTimeSeriesPipeline():
     def __init__(self,
                  history_size,
-                 horizon_size,
-                 historic_columns,
-                 horizon_columns,
+                 prediction_size,
+                 history_columns,
+                 meta_columns,
                  prediction_columns,
                  shift,
                  batch_size,
@@ -124,10 +115,10 @@ class WindowedTimeSeriesPipeline():
                  shuffle_buffer_size,
                  seed):
         self.history_size = history_size
-        self.horizon_size = horizon_size
-        self.window_size = history_size + horizon_size
-        self.historic_columns = historic_columns
-        self.horizon_columns = horizon_columns
+        self.prediction_size = prediction_size
+        self.window_size = history_size + prediction_size
+        self.history_columns = history_columns
+        self.meta_columns = meta_columns
         self.prediction_columns = prediction_columns
         self.shift = shift
         self.batch_size = batch_size
@@ -154,8 +145,8 @@ class WindowedTimeSeriesPipeline():
         ds = ds.batch(self.batch_size)
 
         ds = ds.map(BatchPreprocessor(self.history_size,
-                                      self.historic_columns,
-                                      self.horizon_columns,
+                                      self.history_columns,
+                                      self.meta_columns,
                                       self.prediction_columns),
                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
