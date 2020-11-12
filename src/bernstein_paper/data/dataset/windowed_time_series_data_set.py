@@ -37,9 +37,6 @@
 import tensorflow as tf
 import numpy as np
 
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.compose import make_column_transformer
-
 from ..loader import CSVDataLoader
 from ..pipeline import WindowedTimeSeriesPipeline
 
@@ -55,17 +52,13 @@ def encode(data, cycl_name, cycl=None):
 
 
 class DatasetGenerator():
-    def __init__(self, df, columns, column_transformer=None):
+    def __init__(self, df, columns):
         self.grpd = df.groupby('id')
         self.columns = columns
-        self.column_transformer = column_transformer
 
     def __call__(self):
         for _, d in self.grpd:
-            if self.column_transformer is not None:
-                yield self.column_transformer.transform(d)
-            else:
-                yield d[self.columns].values
+            yield d[self.columns].values
 
 
 class WindowedTimeSeriesDataSet():
@@ -77,7 +70,7 @@ class WindowedTimeSeriesDataSet():
                  meta_columns,
                  prediction_columns,
                  data_splitter=None,
-                 column_transformer=None,
+                 column_transformers={},
                  shift=None,
                  batch_size=32,
                  cycle_length=100,
@@ -87,7 +80,8 @@ class WindowedTimeSeriesDataSet():
             set(history_columns + prediction_columns + meta_columns)))
         dtype = {'id': 'uint16',
                  'load': 'float32',
-                 'is_holiday': 'uint8'}
+                 'is_holiday': 'uint8',
+                 'weekday': 'uint8'}
         shift = shift or prediction_size
 
         self.data_loader = CSVDataLoader(
@@ -95,24 +89,6 @@ class WindowedTimeSeriesDataSet():
             dtype=dtype
         )
         self.data_splitter = data_splitter
-        if column_transformer is None:
-            scalers = {}
-            if 'load' in self.columns:
-                scalers['load'] = MinMaxScaler(feature_range=(0, 1))
-            if 'is_holiday' in self.columns:
-                scalers['is_holiday'] = MinMaxScaler(feature_range=(0, 1))
-
-            for c in self.columns:
-                if 'cos' in c or 'sin' in c:
-                    scalers[c] = 'passthrough'
-
-            self.column_transformer = make_column_transformer(
-                *[(scalers[k], [k]) for k in sorted(scalers.keys())],
-            )
-            self.fit_transformer = True
-        else:
-            self.column_transformer = column_transformer
-            self.fit_transformer = False
 
         self.data_pipeline = WindowedTimeSeriesPipeline(
             history_size=history_size,
@@ -124,21 +100,18 @@ class WindowedTimeSeriesDataSet():
             batch_size=batch_size,
             cycle_length=cycle_length,
             shuffle_buffer_size=shuffle_buffer_size,
-            seed=seed
+            seed=seed,
+            column_transformers=column_transformers
         )
 
     def __call__(self):
         data = self.data_loader()
         data = encode(data, 'dayofyear')
-        data = encode(data, 'weekday')
         data = encode(data, 'time', data.index.hour * 60 + data.index.minute)
         if self.data_splitter is not None:
             data = self.data_splitter(data)
-        if self.fit_transformer:
-            self.column_transformer.fit(data)
 
-        generator = DatasetGenerator(
-            data, self.columns, self.column_transformer)
+        generator = DatasetGenerator(data, self.columns)
         ds = tf.data.Dataset.from_generator(
             generator,
             output_types=tf.float32,

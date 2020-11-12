@@ -1,5 +1,7 @@
 import os
 
+import tensorflow as tf
+
 from functools import partial
 
 from .dataset import WindowedTimeSeriesDataSet
@@ -12,7 +14,7 @@ def load_data(data_path: str,
               history_columns=['load', 'is_holiday', 'tempC'],
               meta_columns=['is_holiday', 'tempC'],
               prediction_columns=['load'],
-              splits=['validate', 'test'],
+              splits=['train', 'validate', 'test'],
               shift=None,
               validation_split=None,
               batch_size=32,
@@ -66,6 +68,11 @@ def load_data(data_path: str,
     # common ##################################################################
     data = {}
 
+    column_transformers = {}
+    column_transformers['load'] = lambda x: tf.math.log(x + 1e-5)
+    column_transformers['weekday'] = lambda x: tf.one_hot(
+        tf.cast(tf.squeeze(x), tf.uint8), 6)
+
     make_dataset = partial(WindowedTimeSeriesDataSet,
                            history_size=history_size,
                            prediction_size=prediction_size,
@@ -76,20 +83,23 @@ def load_data(data_path: str,
                            batch_size=32,
                            cycle_length=cycle_length,
                            shuffle_buffer_size=shuffle_buffer_size,
-                           seed=seed)
+                           seed=seed,
+                           column_transformers=column_transformers)
 
     # train data ##############################################################
-    if validation_split is not None:
-        data_splitter = TimeSeriesSplit(
-            1 - validation_split, TimeSeriesSplit.LEFT)
-    else:
-        data_splitter = None
     train_data_path = os.path.join(data_path, 'train.csv')
+    test_data_path = os.path.join(data_path, 'test.csv')
 
-    train_ds_builder = make_dataset(
-        file_path=train_data_path,
-        data_splitter=data_splitter)
-    data['train'] = train_ds_builder()
+    if 'train' in splits:
+        if validation_split is not None:
+            data_splitter = TimeSeriesSplit(
+                1 - validation_split, TimeSeriesSplit.LEFT)
+        else:
+            data_splitter = None
+
+        data['train'] = make_dataset(
+            file_path=train_data_path,
+            data_splitter=data_splitter)()
 
     # validation data #########################################################
     if 'validate' in splits and validation_split is not None:
@@ -98,14 +108,11 @@ def load_data(data_path: str,
 
         data['validate'] = make_dataset(
             file_path=train_data_path,
-            data_splitter=data_splitter,
-            column_transformer=train_ds_builder.column_transformer)()
+            data_splitter=data_splitter)()
 
     # test data ###############################################################
     if 'test' in splits:
-        test_data_path = os.path.join(data_path, 'test.csv')
         data['test'] = make_dataset(
-            file_path=test_data_path,
-            column_transformer=train_ds_builder.column_transformer)()
+            file_path=test_data_path)()
 
     return data

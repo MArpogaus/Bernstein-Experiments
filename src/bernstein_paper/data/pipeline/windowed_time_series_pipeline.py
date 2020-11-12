@@ -66,40 +66,50 @@ class BatchPreprocessor():
     def __init__(self, history_size,
                  history_columns,
                  meta_columns,
-                 prediction_columns):
+                 prediction_columns,
+                 column_transformers={}):
         self.history_size = history_size
         self.history_columns = history_columns
         self.meta_columns = meta_columns
         self.prediction_columns = prediction_columns
+        self.column_transformers = column_transformers
 
         columns = sorted(
             list(set(history_columns + prediction_columns + meta_columns)))
         self.column_idx = {c: i for i, c in enumerate(columns)}
 
     def __call__(self, batch):
-        y = tf.stack([batch[:, self.history_size:, self.column_idx[c]]
-                      for c in sorted(self.prediction_columns)], axis=2)
-
+        y = []
         x_hist = []
         x_meta = []
 
         x_columns = sorted(set(self.history_columns + self.meta_columns))
+        y_columns = sorted(self.prediction_columns)
+
+        for c in y_columns:
+            column = batch[:, self.history_size:, self.column_idx[c]]
+            column = self.get_column_transformer(c)(column)
+            y.append(column)
 
         if len(x_columns) == 0:
             ValueError('No feature columns provided')
 
-        for ch in x_columns:
-            p = batch[:, :self.history_size, self.column_idx[ch]]
-            if ch in self.history_columns:
-                x_hist.append(p)
-            p = batch[:, :1, self.column_idx[ch]]
-            if ch in self.meta_columns:
-                x_meta.append(p)
+        for c in x_columns:
+            column = batch[:, :, self.column_idx[c], None]
+            column = self.get_column_transformer(c)(column)
+            if c in self.history_columns:
+                x_hist.append(column[:, :self.history_size, 0])
+            if c in self.meta_columns:
+                x_meta.append(column[:, :1, ...])
 
+        y = tf.stack(y, axis=2)
         x_hist = tf.stack(x_hist, axis=2)
-        x_meta = tf.stack(x_meta, axis=2)
+        x_meta = tf.concat(x_meta, axis=2)
 
         return (x_hist, x_meta), y
+
+    def get_column_transformer(self, column):
+        return self.column_transformers.get(column, tf.identity)
 
 
 class WindowedTimeSeriesPipeline():
@@ -113,7 +123,8 @@ class WindowedTimeSeriesPipeline():
                  batch_size,
                  cycle_length,
                  shuffle_buffer_size,
-                 seed):
+                 seed,
+                 column_transformers={}):
         self.history_size = history_size
         self.prediction_size = prediction_size
         self.window_size = history_size + prediction_size
@@ -125,6 +136,7 @@ class WindowedTimeSeriesPipeline():
         self.cycle_length = cycle_length
         self.shuffle_buffer_size = shuffle_buffer_size
         self.seed = seed
+        self.column_transformers = column_transformers
 
     def __call__(self, ds):
 
@@ -147,7 +159,8 @@ class WindowedTimeSeriesPipeline():
         ds = ds.map(BatchPreprocessor(self.history_size,
                                       self.history_columns,
                                       self.meta_columns,
-                                      self.prediction_columns),
+                                      self.prediction_columns,
+                                      self.column_transformers),
                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
         ds = ds.prefetch(1)

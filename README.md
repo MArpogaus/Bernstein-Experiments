@@ -8,7 +8,7 @@ This repo contains the TensorFlow experiments of our paper
 
  1. Bernstein Flow
     ```bash
-    pip install git+https://github.com/MArpogaus/    TensorFlow-Probability-Bernstein-Polynomial-Bijector.git
+    pip install git+https://github.com/MArpogaus/TensorFlow-Probability-Bernstein-Polynomial-Bijector.git
     ```
  2. TensorFlow Experiments
     ```bash
