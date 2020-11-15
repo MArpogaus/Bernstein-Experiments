@@ -43,15 +43,17 @@ __date__ = "2020-03-31 19:22:59"
 # REQUIRED PYTHON MODULES #####################################################
 import numpy as np
 
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Reshape
-from tensorflow.keras.layers import InputLayer
-from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.models import Model
 
 
-def build_model(input_shape,
+def build_model(history_shape,
+                meta_shape,
                 output_shape,
                 hidden_layers=[
                     dict(units=50,
@@ -62,20 +64,23 @@ def build_model(input_shape,
                 batch_normalization=True,
                 name=None):
 
-    model = Sequential(name=name or 'feed_forward')
+    hist_in = Input(shape=history_shape)
+    meta_in = Input(shape=meta_shape)
 
-    model.add(InputLayer(input_shape))
+    x1 = Flatten()(hist_in)
+    x2 = Flatten()(meta_in)
 
-    model.add(Flatten())
+    x = Concatenate()([x1, x2])
 
     if batch_normalization:
-        model.add(BatchNormalization())
+        x = BatchNormalization()(x)
 
     for kwds in hidden_layers:
-        model.add(Dense(**kwds))
+        x = Dense(**kwds)(x)
         if batch_normalization:
-            model.add(BatchNormalization())
+            x = BatchNormalization()(x)
 
-    model.add(Dense(np.prod(output_shape), **output_layer_kwds))
-    model.add(Reshape(output_shape))
-    return model
+    x = Dense(np.prod(output_shape), **output_layer_kwds)(x)
+    x = Reshape(output_shape)(x)
+
+    return Model(inputs=[hist_in, meta_in], outputs=x)

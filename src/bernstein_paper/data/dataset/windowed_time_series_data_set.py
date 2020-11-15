@@ -63,12 +63,12 @@ class DatasetGenerator():
 
 class WindowedTimeSeriesDataSet():
     def __init__(self,
-                 file_path,
                  history_size,
                  prediction_size,
                  history_columns,
                  meta_columns,
                  prediction_columns,
+                 file_path=None,
                  data_splitter=None,
                  column_transformers={},
                  shift=None,
@@ -78,17 +78,23 @@ class WindowedTimeSeriesDataSet():
                  seed=42):
         self.columns = sorted(list(
             set(history_columns + prediction_columns + meta_columns)))
-        dtype = {'id': 'uint16',
-                 'load': 'float32',
-                 'is_holiday': 'uint8',
-                 'weekday': 'uint8'}
-        shift = shift or prediction_size
 
-        self.data_loader = CSVDataLoader(
-            file_path=file_path,
-            dtype=dtype
-        )
-        self.data_splitter = data_splitter
+        if file_path:
+            dtype = {'id': 'uint16',
+                     'load': 'float32',
+                     'is_holiday': 'uint8',
+                     'weekday': 'uint8'}
+            shift = shift or prediction_size
+
+            self.data_loader = CSVDataLoader(
+                file_path=file_path,
+                dtype=dtype
+            )
+            self.data_splitter = data_splitter
+
+        else:
+            self.data_loader = None
+            self.data_splitter = None
 
         self.data_pipeline = WindowedTimeSeriesPipeline(
             history_size=history_size,
@@ -104,10 +110,17 @@ class WindowedTimeSeriesDataSet():
             column_transformers=column_transformers
         )
 
-    def __call__(self):
-        data = self.data_loader()
+    def __call__(self, data=None):
+        if self.data_loader is not None and data is None:
+            data = self.data_loader()
+        elif data is not None:
+            data = data
+        else:
+            ValueError('No data Provided')
+
         data = encode(data, 'dayofyear')
         data = encode(data, 'time', data.index.hour * 60 + data.index.minute)
+
         if self.data_splitter is not None:
             data = self.data_splitter(data)
 

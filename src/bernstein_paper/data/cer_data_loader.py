@@ -12,7 +12,7 @@ def load_data(data_path: str,
               history_size,
               prediction_size,
               history_columns=['load', 'is_holiday', 'tempC'],
-              meta_columns=['is_holiday', 'tempC'],
+              meta_columns=['is_holiday', 'weekday'],
               prediction_columns=['load'],
               splits=['train', 'validate', 'test'],
               shift=None,
@@ -67,9 +67,13 @@ def load_data(data_path: str,
 
     # common ##################################################################
     data = {}
+    load_max = 14.134
+    eps = 1e-5
 
     column_transformers = {}
-    column_transformers['load'] = lambda x: tf.math.log(x + 1e-5)
+    # column_transformers['load'] = lambda x: tf.math.log(
+    #     (x + eps) / eps) / (tf.math.log(load_max / eps))
+    column_transformers['load'] = lambda x: tf.sqrt(x / 14.134)
     column_transformers['weekday'] = lambda x: tf.one_hot(
         tf.cast(tf.squeeze(x), tf.uint8), 6)
 

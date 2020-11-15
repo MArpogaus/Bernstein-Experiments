@@ -1,9 +1,9 @@
-data_path: ../data/CER Electricity Revised March 2012/preprocessed/mini
-history_size: !store [history_size, !product [48,7]]
-horizon_size: !store [horizon_size, !product [48,1]]
+data_path: ../paper_data
+history_size: !store [history_size, !product [48,7,2]]
+prediction_size: !store [horizon_size, !product [48,1]]
 shift: $horizon_size
-historic_columns: ['load', 'is_holiday', 'tempC']
-horizon_columns: ['is_holiday', 'tempC']
+history_columns:  ['load']
+meta_columns: ['dayofyear_sin', 'dayofyear_cos', 'weekday', 'time_sin', 'time_cos', 'is_holiday']
 prediction_columns: ['load']
 validation_split: 0.1
 batch_size: 32

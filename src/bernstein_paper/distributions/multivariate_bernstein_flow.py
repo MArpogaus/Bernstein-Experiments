@@ -5,7 +5,7 @@
 #
 # author  : marcel
 # created : 2020-10-30 20:13:08
-# changed : 2020-11-02 09:55:20
+# changed : 2020-11-14 18:32:58
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -65,8 +65,7 @@ class MultivariateBernsteinFlow(tfd.Blockwise):
 
         flows = []
         for d in range(num_dist):
-            pv = pvector[:, d]
-            flow = BernsteinFlow(pv)
+            flow = BernsteinFlow(pvector[:, d])
             flows.append(flow)
 
         joint = tfd.JointDistributionSequential(flows, name='joint_bs_flows')
