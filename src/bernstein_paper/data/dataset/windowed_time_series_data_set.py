@@ -84,7 +84,11 @@ class WindowedTimeSeriesDataSet():
                      'load': 'float32',
                      'is_holiday': 'uint8',
                      'weekday': 'uint8'}
-            shift = shift or prediction_size
+
+            if shift is None:
+                shift = prediction_size
+            else:
+                shift = shift
 
             self.data_loader = CSVDataLoader(
                 file_path=file_path,
