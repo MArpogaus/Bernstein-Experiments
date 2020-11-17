@@ -1,44 +1,32 @@
 #!env python3
-# -*- coding: utf-8 -*-
 # AUTHOR INFORMATION ##########################################################
-# file   : feed_forward.py
-# brief  : [Description]
+# file    : feed_forward.py
+# brief   : [Description]
 #
-# author : Marcel Arpogaus
-# date   : 2020-03-31 19:22:59
+# author  : Marcel Arpogaus
+# created : 2020-03-31 19:22:59
+# changed : 2020-11-17 16:09:18
+# DESCRIPTION #################################################################
+#
+# This project is following the PEP8 style guide:
+#
+#    https://www.python.org/dev/peps/pep-0008/)
+#
 # COPYRIGHT ###################################################################
-# NEEDS TO BE DISCUSSED WHEN RELEASED!
+# Copyright 2020 Marcel Arpogaus
 #
-# PROJECT DESCRIPTION #########################################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# NOTE: this project is following the PEP8 style guide
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
-# Bla bla...
-#
-# CHANGELOG ##################################################################
-# modified by   : Marcel Arpogaus
-# modified time : 2020-05-16 13:34:12
-#  changes made : ...
-# modified by   : Marcel Arpogaus
-# modified time : 2020-03-31 19:22:59
-#  changes made : newly written
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ###############################################################################
-
-# PYTHON AUTHORSHIP INFORMATION ###############################################
-# ref.: https://stackoverflow.com/questions/1523427
-
-"""baseline.py: [Description]"""
-
-__author__ = ["Marcel Arpogaus"]
-# __authors__ = ["author_one", "author_two" ]
-# __contact__ = "kontakt@htwg-konstanz.de"
-
-# __copyright__ = ""
-# __license__ = ""
-
-__date__ = "2020-03-31 19:22:59"
-# __status__ = ""
-# __version__ = ""
 
 # REQUIRED PYTHON MODULES #####################################################
 import numpy as np
@@ -83,4 +71,4 @@ def build_model(history_shape,
     x = Dense(np.prod(output_shape), **output_layer_kwds)(x)
     x = Reshape(output_shape)(x)
 
-    return Model(inputs=[hist_in, meta_in], outputs=x)
+    return Model(inputs=[hist_in, meta_in], outputs=x, name=name)

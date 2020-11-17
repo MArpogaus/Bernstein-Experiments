@@ -52,13 +52,12 @@ class MixtedDensityLoss(Loss):
     def __init__(
             self,
             **kwargs):
-        self.mixed_density = MixedNormal()
 
         super().__init__(**kwargs)
 
     def call(self, y, pvector):
 
-        dist = self.mixed_density(pvector)
+        dist = MixedNormal(pvector)
         y = tf.squeeze(y)
         nll = -dist.log_prob(y)
 

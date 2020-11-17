@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-03-31 19:22:59
-# changed : 2020-11-02 09:55:07
+# changed : 2020-11-17 16:26:53
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -55,6 +55,7 @@ class MultivariateBernsteinFlowLoss(Loss):
         """
         super().__init__(**kwargs)
 
+    @tf.function
     def call(self,
              y: tf.Tensor,
              pvector: tf.Tensor) -> tf.Tensor:

@@ -1,42 +1,48 @@
 #!env python3
-# -*- coding: utf-8 -*-
 # AUTHOR INFORMATION ##########################################################
-# file   : wavenet_cnn.py
-# brief  : [Description]
+# file    : wavenet_cnn.py
+# brief   : [Description]
 #
-# author : Marcel Arpogaus
-# date   : 2020-03-31 19:22:59
+# author  : Marcel Arpogaus
+# created : 2020-10-30 13:38:39
+# changed : 2020-11-17 16:18:57
+# DESCRIPTION #################################################################
+#
+# This project is following the PEP8 style guide:
+#
+#    https://www.python.org/dev/peps/pep-0008/)
+#
 # COPYRIGHT ###################################################################
-# NEEDS TO BE DISCUSSED WHEN RELEASED!
+# Copyright 2020 Marcel Arpogaus
 #
-# PROJECT DESCRIPTION #########################################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# NOTE: this project is following the PEP8 style guide
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
-# Bla bla...
-#
-# CHANGELOG ##################################################################
-# modified by   : Marcel Arpogaus
-# modified time : 2020-05-16 13:34:55
-#  changes made : ...
-# modified by   : Marcel Arpogaus
-# modified time : 2020-03-31 19:22:59
-#  changes made : newly written
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ###############################################################################
 
 # REQUIRED PYTHON MODULES #####################################################
 import numpy as np
 
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Conv1D
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Reshape
-from tensorflow.keras.layers import InputLayer
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import BatchNormalization
 
 
-def build_model(input_shape,
+def build_model(history_shape,
+                meta_shape,
                 output_shape,
                 conv_layers=[
                     dict(filters=20, kernel_size=2,
@@ -55,23 +61,27 @@ def build_model(input_shape,
                 batch_normalization=True,
                 name=None):
 
-    model = Sequential(name=name or 'wavenet')
+    hist_in = Input(shape=history_shape)
+    meta_in = Input(shape=meta_shape)
 
-    model.add(InputLayer(input_shape=input_shape))
-
+    hist_conv = hist_in
     for kwds in conv_layers:
-        model.add(Conv1D(**kwds))
+        hist_conv = Conv1D(**kwds)(hist_conv)
+
+    x1 = Flatten()(hist_conv)
+    x2 = Flatten()(meta_in)
+
+    x = Concatenate()([x1, x2])
 
     if batch_normalization:
-        model.add(BatchNormalization())
-
-    model.add(Flatten())
+        x = BatchNormalization()(x)
 
     for kwds in hidden_layers:
-        model.add(Dense(**kwds))
+        x = Dense(**kwds)(x)
         if batch_normalization:
-            model.add(BatchNormalization())
+            x = BatchNormalization()(x)
 
-    model.add(Dense(np.prod(output_shape), **output_layer_kwds))
-    model.add(Reshape(output_shape))
-    return model
+    x = Dense(np.prod(output_shape), **output_layer_kwds)(x)
+    x = Reshape(output_shape)(x)
+
+    return Model(inputs=[hist_in, meta_in], outputs=x, name=name)

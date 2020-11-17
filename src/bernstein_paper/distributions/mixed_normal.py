@@ -39,15 +39,13 @@ import tensorflow as tf
 from tensorflow_probability import distributions as tfd
 
 
-class MixedNormal():
-    def __init__(self):
-        pass
+class MixedNormal(tfd.Blockwise):
 
-    def __call__(self, pvector):
+    def __init__(self, pvector):
 
-        mixture = self.gen_mixture(pvector)
+        joint = self.gen_mixture(pvector)
 
-        return mixture
+        super().__init__(joint, name='MixedNormal')
 
     def slice_parameter_vectors(self, pvector):
         """ Returns an unpacked list of paramter vectors.
@@ -76,5 +74,4 @@ class MixedNormal():
 
         joint = tfd.JointDistributionSequential(
             mixtures, name='joint_mixtures')
-        blkws = tfd.Blockwise(joint)
-        return blkws
+        return joint
