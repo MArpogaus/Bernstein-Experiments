@@ -1,4 +1,4 @@
-data_path: ../paper_data
+data_path: ../paper_data/mini
 history_size: !store [history_size, !product [48,7,2]]
 prediction_size: !store [horizon_size, !product [48,1]]
 shift: $horizon_size

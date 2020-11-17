@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+
+  train:
+    build: .
+    container_name: ${USER}-train
+    command: tfexp train configs
+    volumes:
+      - ./logs:/app/logs
+      - ./configs:/app/configs
+      - ../paper_data:/paper_data:ro
+    environment:
+     CUDA_VISIBLE_DEVICES: 0
+
+  jupyter:
+    build: .
+    container_name: ${USER}-jupyter
+    command: jupyter notebook --notebook-dir=/app/ipynb --ip 0.0.0.0 --no-browser --allow-root
+    ports:
+      - 8081:8888
+    volumes:
+      - ./logs:/app/logs:ro
+      - ./configs:/app/configs:ro
+      - ../paper_data:/paper_data:ro
+      - ./ipynb:/app/ipynb
+
+  tensorboard:
+    build: .
+    container_name: ${USER}-tensorboard
+    command: tensorboard --logdir ./logs
+    ports:
+      - 8082:6006
+    volumes:
+      - ./logs:/app/logs:ro

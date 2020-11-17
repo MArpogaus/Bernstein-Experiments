@@ -1,17 +1,19 @@
-FROM tensorflow/tensorflow:1.12.0-gpu-py3
+FROM tensorflow/tensorflow:latest-gpu-jupyter
+
+RUN apt update; \
+    apt install -y git; \
+    pip install --upgrade pip;
+
+RUN pip install tensorboard
+
+RUN pip install git+https://github.com/MArpogaus/TensorFlow-Probability-Bernstein-Polynomial-Bijector.git
+
+RUN pip install git+https://github.com/MArpogaus/tensorflow-experiments.git@dev
 
 WORKDIR /app
 
 ADD . /app
 
-RUN pip install git+https://github.com/MArpogaus/TensorFlow-Probability-Bernstein-Polynomial-Bijector.git
-
-RUN pip install git+https://github.com/MArpogaus/tensorflow-experiments.git
-
 RUN pip install .
 
-RUN pip install tensorboard jupyter
-
-ENTRYPOINT "entrypint.sh"
-
-CMD ["jupyter-notebook;", "tensorboard --logdir ./logs"]
+ENTRYPOINT ["./entrypoint.sh"]
