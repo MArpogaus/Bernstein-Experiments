@@ -1,11 +1,11 @@
 #!env python3
 # AUTHOR INFORMATION ##########################################################
-# file    : normal_distribution.py
+# file    : mean_absolute_error.py
 # brief   : [Description]
 #
 # author  : Marcel Arpogaus
-# created : 2020-11-19 16:05:06
-# changed : 2020-11-19 16:05:51
+# created : 2020-11-24 15:59:45
+# changed : 2020-11-25 15:21:24
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -33,12 +33,22 @@ import tensorflow as tf
 
 from tensorflow_probability import distributions as tfd
 
+class MeanAbsoluteError(tf.keras.metrics.MeanAbsoluteError):
 
-class NormalDistribution(tfd.Normal):
+    def __init__(self,
+                 distribution_class,
+                 name='mean_absolute_error',
+                 scale=1.,
+                 **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.distribution_class = distribution_class
+        self.scale = scale
 
-    def __init__(self, pvector):
-
-        super().__init__(
-            loc=pvector[..., 0],
-            scale=1e-3 + tf.math.softplus(0.05 * pvector[..., 1]),
-            name='NormalDistribution')
+    def update_state(self, y_true, pvector, sample_weight=None):
+        dist = tfd.Independent(self.distribution_class(pvector))
+        mean = dist.mean()
+        super().update_state(
+            y_true * self.scale,
+            mean * self.scale,
+            sample_weight
+        )

@@ -15,7 +15,7 @@ model_checkpoints: !join
 model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
-    meta_shape: !!python/tuple [1, !sum [2, 2, 6, 1]]
+    meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
     output_shape: !!python/tuple [$horizon_size, 100]
     hidden_layers: !include shared/feed_forward_hidden_layers.yaml
     batch_normalization: true
@@ -28,7 +28,6 @@ compile_kwds:
       lr: !store [lr, 0.001]
 
 fit_kwds:
-  epochs: 150
-  shuffle: True
+  epochs: 50
   validation_freq: 1
   callbacks: !include shared/callbacks.yaml

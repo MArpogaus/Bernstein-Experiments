@@ -5,7 +5,7 @@
 #
 # author  : marcel
 # created : 2020-10-30 20:13:08
-# changed : 2020-11-14 18:32:58
+# changed : 2020-11-19 15:49:20
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -69,4 +69,15 @@ class MultivariateBernsteinFlow(tfd.Blockwise):
             flows.append(flow)
 
         joint = tfd.JointDistributionSequential(flows, name='joint_bs_flows')
-        super().__init__(joint, name='MultivariateBernsteinFlow')
+        super().__init__(flows, name='MultivariateBernsteinFlow')
+
+    def _stddev(self):
+        return self._flatten_and_concat_event(self._distribution.stddev())
+
+    def _quantile(self, value):
+        qs = [d._quantile(value) for d in self.distributions]
+        return self._flatten_and_concat_event(qs)
+
+    def _cdf(self, value):
+        qs = [d._cdf(value) for d in self.distributions]
+        return self._flatten_and_concat_event(qs)

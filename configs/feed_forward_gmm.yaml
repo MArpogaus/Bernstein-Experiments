@@ -15,20 +15,34 @@ model_checkpoints: !join
 model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
-    meta_shape: !!python/tuple [1, !sum [2, 2, 6, 1]]
+    meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
     output_shape: !!python/tuple [$horizon_size, 3, 3]
     hidden_layers: !include shared/feed_forward_hidden_layers.yaml
     batch_normalization: true
     name: *name
 
 compile_kwds:
-  loss: !!python/object/apply:bernstein_paper.losses.MixtedDensityLoss {}
+  loss: !!python/object/apply:bernstein_paper.losses.NegativeLogarithmicLikelihood
+    kwds:
+      distribution_class: &distribution_class !!python/name:bernstein_paper.distributions.MixedNormal
+  metrics:
+    - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
+      kwds:
+        distribution_class: *distribution_class
+        scale: &max_load 14.134
+    - !!python/object/apply:bernstein_paper.metrics.MeanSquaredError
+      kwds:
+        distribution_class: *distribution_class
+        scale: *max_load
+    - !!python/object/apply:bernstein_paper.metrics.ContinuousRankedProbabilityScore
+      kwds:
+        distribution_class: *distribution_class
+        scale: *max_load
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.00001]
+      lr: !store [lr, 0.0001]
 
 fit_kwds:
   epochs: 50
-  shuffle: True
   validation_freq: 1
   callbacks: !include shared/callbacks.yaml

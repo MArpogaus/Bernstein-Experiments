@@ -3,7 +3,7 @@ history_size: !store [history_size, !product [48,7,2]]
 prediction_size: !store [horizon_size, !product [48,1]]
 shift: $horizon_size
 history_columns:  ['load']
-meta_columns: ['dayofyear_sin', 'dayofyear_cos', 'weekday', 'time_sin', 'time_cos', 'is_holiday']
+meta_columns: ['dayofyear_sin', 'dayofyear_cos', 'weekday', 'is_holiday']
 prediction_columns: ['load']
 validation_split: 0.1
 batch_size: 32

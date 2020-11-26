@@ -1,3 +1,4 @@
 from .multivariate_bernstein_flow import MultivariateBernsteinFlow
 from .mixed_normal import MixedNormal
 from .normal_distribution import NormalDistribution
+from .quantile_regression_distribution_wrapper import QuantileRegressionDistributionWrapper
