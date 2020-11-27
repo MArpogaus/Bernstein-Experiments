@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-11-26 14:21:13
-# changed : 2020-11-26 14:50:54
+# changed : 2020-11-27 16:00:37
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -50,6 +50,7 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
 
     def __init__(self,
                  quantiles,
+                 constrain_quantiles=PinballLoss.constrain_quantiles,
                  validate_args=False,
                  allow_nan_stats=True,
                  name='QuantileDistributionWrapper'):
@@ -63,9 +64,9 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
 
             assert self.quantiles.shape[-1] == 100, '100 Qunatiles reqired'
 
-            self.quantiles = PinballLoss.constrain_quantiles(self.quantiles)
+            self.quantiles = constrain_quantiles(self.quantiles)
 
-            self._pdf_sp, self._cdf_sp = self.make_interp_spline()
+            self._pdf_sp, self._cdf_sp, self._quantile_sp = self.make_interp_spline()
 
             super().__init__(
                 dtype=dtype,
@@ -81,14 +82,16 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         percentiles = np.linspace(0., 1., 100, dtype=np.float32)
         quantiles = self.quantiles.numpy().copy()
 
-        # float_min = np.finfo(np.float32).min * np.ones_like(quantiles[...,:1])
-        # float_max = np.finfo(np.float32).max * np.ones_like(quantiles[...,-1:])
+        float_min = np.finfo(np.float32).min * np.ones_like(quantiles[..., :1])
+        float_max = np.finfo(np.float32).max * \
+            np.ones_like(quantiles[..., -1:])
 
-        #quantiles[...,0] = quantiles[...,1] - 5 * np.diff(quantiles)[...,1]
-        #quantiles[...,-1] = quantiles[...,-2] + 5 * np.diff(quantiles)[...,-2]
+        min_q = quantiles[..., :1] - 15 * np.diff(quantiles)[..., :1]
+        max_q = quantiles[..., -1:] + 15 * np.diff(quantiles)[..., -1:]
 
-        #x = np.concatenate([float_min, quantiles, float_max],axis=-1)
-        #y = np.concatenate([percentiles[...,:1], percentiles, percentiles[...,-1:]],axis=-1)
+        x = np.concatenate([float_min, quantiles, float_max], axis=-1)
+        y = np.concatenate(
+            [percentiles[..., :1], percentiles, percentiles[..., -1:]], axis=-1)
 
         x = quantiles
         y = percentiles
@@ -98,11 +101,19 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         x_min = np.min(x, axis=-1)  # [shape]
         x_max = np.max(x, axis=-1)  # [shape]
 
+        quantile_sp = [I.make_interp_spline(
+            y=np.squeeze(x[i]),
+            x=np.squeeze(y),
+            k=3,
+            bc_type='clamped',
+            # assume_sorted=True
+        ) for i in range(x.shape[0])]
+
         cdf_sp = [I.make_interp_spline(
             y=np.squeeze(y),
             x=np.squeeze(x[i]),
             k=3,
-            bc_type=([(1, 0.0)], [(1, 0.0)]),
+            bc_type='clamped',
             # assume_sorted=True
         ) for i in range(x.shape[0])]
         pdf_sp = [s.derivative(1) for s in cdf_sp]
@@ -123,7 +134,15 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
             y = np.stack(y, axis=-1)
             return y
 
-        return pdf_sp_fn, cdf_sp_fn
+        def quantile_sp_fn(p):
+            q = []
+            p_clip = np.clip(p, np.zeros_like(x_min), np.ones_like(x_max))
+            for i, ip in enumerate(quantile_sp):
+                q.append(ip(p_clip[..., i]).astype(np.float32))
+            q = np.stack(q, axis=-1)
+            return q
+
+        return pdf_sp_fn, cdf_sp_fn, quantile_sp_fn
 
     def reshape_out(self, sample_shape, y):
         output_shape = prefer_static.broadcast_shape(
@@ -131,6 +150,7 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         return tf.reshape(y, output_shape)
 
     def _eval_spline(self, x, attr):
+        x = np.asarray(x, dtype=np.float32)
         batch_rank = tensorshape_util.rank(self.batch_shape)
         sample_shape = x.shape
 
@@ -162,17 +182,17 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         return self._eval_spline(x, '_cdf_sp')
 
     def _mean(self):
-        return self.quantiles[..., 50]
+        return self._quantile(0.5)
 
     def _quantile(self, p):
-        input_shape = p.shape
-        q = self.quantiles
-        perm = tf.concat([[q.ndim - 1], tf.range(0, q.ndim - 1)], 0)
-        q = tfp.math.interp_regular_1d_grid(
-            p,
-            x_ref_min=0.,
-            x_ref_max=1.,
-            y_ref=tf.transpose(q, perm),
-            axis=0)
-
-        return self.reshape_out(input_shape, q)
+        # input_shape = p.shape
+        # q = self.quantiles
+        # perm = tf.concat([[q.ndim - 1], tf.range(0, q.ndim - 1)], 0)
+        # q = tfp.math.interp_regular_1d_grid(
+        #     p,
+        #     x_ref_min=0.,
+        #     x_ref_max=1.,
+        #     y_ref=tf.transpose(q, perm),
+        #     axis=0)
+        # return self.reshape_out(input_shape, q)
+        return self._eval_spline(p, '_quantile_sp')
