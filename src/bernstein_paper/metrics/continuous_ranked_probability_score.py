@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-11-24 16:03:02
-# changed : 2020-11-26 14:56:22
+# changed : 2020-12-02 19:05:20
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -30,6 +30,8 @@
 
 # REQUIRED PYTHON MODULES #####################################################
 import tensorflow as tf
+
+from absl import logging
 
 
 def trapez(y, x):
@@ -66,14 +68,17 @@ class ContinuousRankedProbabilityScore(tf.keras.metrics.Mean):
             x_max = 10**(2 + y_true // 10)
 
         # make sure the bounds haven't clipped the cdf.
-        if tf.math.reduce_any(cdf(x_min) >= self.tol) or tf.math.reduce_any(cdf(x_max) < (1. - self.tol)):
-            raise ValueError('CDF does not meet tolerance requirements at %s '
-                             'extreme(s)! Consider using function defaults '
-                             'or using infinities at the bounds. '
-                             % ('lower' if tf.math.reduce_any(cdf(x_min) >= self.tol) else 'upper'))
+        warning = 'CDF does not meet tolerance requirements at {} ' \
+                  'extreme(s)! Consider using function defaults ' \
+                  'or using infinities at the bounds. '
 
-        # CRPS = int_-inf^inf (F(y) - H(x))**2 dy
-        #      = int_-inf^x F(y)**2 dy + int_x^inf (1 - F(y))**2 dy
+        if tf.math.reduce_any(cdf(x_min) >= self.tol):
+            logging.warning(warning.format('lower'))
+        if tf.math.reduce_any(cdf(x_max) < (1. - self.tol)):
+            logging.warning(warning.format('upper'))
+
+            # CRPS = int_-inf^inf (F(y) - H(x))**2 dy
+            #      = int_-inf^x F(y)**2 dy + int_x^inf (1 - F(y))**2 dy
         def lhs(x):
             # left hand side of CRPS integral
             return tf.square(cdf(x))
