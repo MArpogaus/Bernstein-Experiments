@@ -163,7 +163,7 @@ class WindowedTimeSeriesPipeline():
                                       self.column_transformers),
                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-        ds = ds.prefetch(1)
         ds = ds.cache()
+        ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
 
         return ds

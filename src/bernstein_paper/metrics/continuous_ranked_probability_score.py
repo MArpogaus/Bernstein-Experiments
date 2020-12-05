@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-11-24 16:03:02
-# changed : 2020-12-02 19:05:20
+# changed : 2020-12-03 09:27:30
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -34,6 +34,7 @@ import tensorflow as tf
 from absl import logging
 
 
+@tf.function
 def trapez(y, x):
     d = x[1:] - x[:-1]
     return tf.reduce_sum(d * (y[1:] + y[:-1]) / 2., axis=0)
@@ -68,9 +69,7 @@ class ContinuousRankedProbabilityScore(tf.keras.metrics.Mean):
             x_max = 10**(2 + y_true // 10)
 
         # make sure the bounds haven't clipped the cdf.
-        warning = 'CDF does not meet tolerance requirements at {} ' \
-                  'extreme(s)! Consider using function defaults ' \
-                  'or using infinities at the bounds. '
+        warning = 'CDF does not meet tolerance requirements at {} extreme(s)!'
 
         if tf.math.reduce_any(cdf(x_min) >= self.tol):
             logging.warning(warning.format('lower'))

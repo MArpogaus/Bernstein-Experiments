@@ -1,5 +1,5 @@
 seed: !store [seed, 42]
-name: &name wavenet_bernstein_flow
+name: &name wavenet_normal_distribution
 
 data_loader: !!python/name:bernstein_paper.data.cer_data_loader.load_data
 data_loader_kwds: !include shared/data_loader_kwds.yaml
@@ -16,7 +16,7 @@ model: !!python/object/apply:bernstein_paper.models.wavenet_cnn.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
     meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
-    output_shape: !!python/tuple [$horizon_size, !sum [2, 10]]
+    output_shape: !!python/tuple [$horizon_size, 2]
     conv_layers: !include shared/wavenet_conv_layers.yaml
     hidden_layers: !include shared/wavenet_hidden_layers.yaml
     batch_normalization: false
@@ -25,24 +25,10 @@ model: !!python/object/apply:bernstein_paper.models.wavenet_cnn.build_model
 compile_kwds:
   loss: !!python/object/apply:bernstein_paper.losses.NegativeLogarithmicLikelihood
     kwds:
-      distribution_class: &distribution_class !!python/name:bernstein_flow.distributions.BernsteinFlow
-  # metrics:
-  #   - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
-  #     kwds:
-  #       distribution_class: *distribution_class
-  #       scale: &max_load 14.134
-  #   - !!python/object/apply:bernstein_paper.metrics.MeanSquaredError
-  #     kwds:
-  #       distribution_class: *distribution_class
-  #       scale: *max_load
-  #   - !!python/object/apply:bernstein_paper.metrics.ContinuousRankedProbabilityScore
-  #     kwds:
-  #       distribution_class: *distribution_class
-  #       scale: *max_load
+      distribution_class: &distribution_class !!python/name:bernstein_paper.distributions.NormalDistribution
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
       lr: !store [lr, 0.0001]
-  #run_eagerly: true
 
 fit_kwds:
   epochs: 50

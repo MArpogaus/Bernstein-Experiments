@@ -7,7 +7,6 @@ from functools import partial
 from .dataset import WindowedTimeSeriesDataSet
 from .splitter import TimeSeriesSplit
 
-@tf.function
 def load_data(data_path: str,
               history_size,
               prediction_size,

@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-11-26 14:21:13
-# changed : 2020-12-02 19:03:37
+# changed : 2020-12-03 14:23:15
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -31,7 +31,7 @@
 # REQUIRED PYTHON MODULES #####################################################
 import numpy as np
 
-import scipy.interpolate as I
+import scipy.interpolate as spi
 
 import tensorflow as tf
 
@@ -43,7 +43,8 @@ from tensorflow_probability.python.internal import tensorshape_util
 from tensorflow_probability.python.internal import prefer_static
 from tensorflow_probability.python.internal import reparameterization
 
-from bernstein_paper.losses import PinballLoss
+from ..losses import PinballLoss
+
 
 class QuantileRegressionDistributionWrapper(tfd.Distribution):
 
@@ -88,10 +89,10 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         x_min = np.min(x, axis=-1)
         x_max = np.max(x, axis=-1)
 
-        cdf_sp = [I.make_interp_spline(
+        cdf_sp = [spi.interp1d(
             y=np.squeeze(y),
             x=np.squeeze(x[i]),
-            k=1,
+            kind='linear'
         ) for i in range(x.shape[0])]
 
         def cdf_sp_fn(x):
@@ -116,9 +117,10 @@ class QuantileRegressionDistributionWrapper(tfd.Distribution):
         x = np.concatenate(
             [np.zeros(1), percentiles, np.ones(1)], axis=-1)
 
-        quantile_sp = [I.interp1d(
+        quantile_sp = [spi.interp1d(
             y=np.squeeze(y[i]),
-            x=np.squeeze(x)
+            x=np.squeeze(x),
+            kind='linear'
         ) for i in range(y.shape[0])]
 
         def quantile_sp_fn(p):

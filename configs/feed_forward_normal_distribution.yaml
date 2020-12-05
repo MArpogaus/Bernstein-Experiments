@@ -25,19 +25,6 @@ compile_kwds:
   loss: !!python/object/apply:bernstein_paper.losses.NegativeLogarithmicLikelihood
     kwds:
       distribution_class: &distribution_class !!python/name:bernstein_paper.distributions.NormalDistribution
-  metrics:
-    - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
-      kwds:
-        distribution_class: *distribution_class
-        scale: &max_load 14.134
-    - !!python/object/apply:bernstein_paper.metrics.MeanSquaredError
-      kwds:
-        distribution_class: *distribution_class
-        scale: *max_load
-    - !!python/object/apply:bernstein_paper.metrics.ContinuousRankedProbabilityScore
-      kwds:
-        distribution_class: *distribution_class
-        scale: *max_load
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
       lr: !store [lr, 0.001]
