@@ -40,7 +40,7 @@ compile_kwds:
   #       scale: *max_load
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.001]
+      lr: !store [lr, 0.0001]
   #run_eagerly: true
 
 fit_kwds:
