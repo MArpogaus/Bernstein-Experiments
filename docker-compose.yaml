@@ -5,7 +5,8 @@ services:
   train:
     build: .
     container_name: ${USER}-train
-    command: tfexp train configs
+    user: ${UID}:${GID}
+    command: tfexp train configs/*bernstein_flow.yaml
     volumes:
       - ./logs:/app/logs
       - ./configs:/app/configs
@@ -16,6 +17,7 @@ services:
   jupyter:
     build: .
     container_name: ${USER}-jupyter
+    user: ${UID}:${GID}
     command: jupyter notebook --notebook-dir=/app/ipynb --ip 0.0.0.0 --no-browser --allow-root
     ports:
       - 8081:8888
@@ -28,6 +30,7 @@ services:
   tensorboard:
     build: .
     container_name: ${USER}-tensorboard
+    user: ${UID}:${GID}
     command: tensorboard --logdir ./logs
     ports:
       - 8082:6006
