@@ -5,7 +5,7 @@
 #
 # author  : Marcel Arpogaus
 # created : 2020-11-24 15:59:45
-# changed : 2020-11-25 15:21:24
+# changed : 2020-12-06 13:05:12
 # DESCRIPTION #################################################################
 #
 # This project is following the PEP8 style guide:
@@ -37,15 +37,19 @@ class MeanAbsoluteError(tf.keras.metrics.MeanAbsoluteError):
 
     def __init__(self,
                  distribution_class,
+                 independent = True,
                  name='mean_absolute_error',
                  scale=1.,
                  **kwargs):
         super().__init__(name=name, **kwargs)
         self.distribution_class = distribution_class
         self.scale = scale
+        self.independent = independent
 
     def update_state(self, y_true, pvector, sample_weight=None):
-        dist = tfd.Independent(self.distribution_class(pvector))
+        dist = self.distribution_class(pvector)
+        if self.independent:
+            dist = tfd.Independent(dist)
         mean = dist.mean()
         super().update_state(
             y_true * self.scale,
