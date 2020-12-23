@@ -6,7 +6,7 @@ RUN apt update; \
 
 RUN pip install tensorboard
 
-RUN pip install git+https://github.com/MArpogaus/TensorFlow-Probability-Bernstein-Polynomial-Bijector.git
+RUN pip install git+https://github.com/MArpogaus/TensorFlow-Probability-Bernstein-Polynomial-Bijector.git@dev
 
 RUN pip install git+https://github.com/MArpogaus/tensorflow-experiments.git@dev
 
