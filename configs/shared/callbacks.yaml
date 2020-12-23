@@ -21,7 +21,7 @@
       verbose: true
      # min_delta: 0.1
       factor: 0.1
-      min_lr: !product [$lr, 0.00001]
+      #min_lr: !product [$lr, 0.00001]
 - !!python/object/apply:tensorflow.keras.callbacks.CSVLogger
     kwds:
       filename: !join [$base_path, !datetime '/{now:%Y%m%d-%H%M%S}.csv']

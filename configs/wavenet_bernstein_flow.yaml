@@ -16,7 +16,7 @@ model: !!python/object/apply:bernstein_paper.models.wavenet_cnn.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
     meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
-    output_shape: !!python/tuple [$horizon_size, !sum [2, 10]]
+    output_shape: !!python/tuple [$horizon_size, !sum [2, 20]]
     conv_layers: !include shared/wavenet_conv_layers.yaml
     hidden_layers: !include shared/wavenet_hidden_layers.yaml
     batch_normalization: false
