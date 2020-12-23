@@ -16,7 +16,7 @@ model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
     meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
-    output_shape: !!python/tuple [$horizon_size, !sum [4, 20]]
+    output_shape: !!python/tuple [$horizon_size, !sum [4, 15]]
     hidden_layers: !include shared/feed_forward_hidden_layers.yaml
     batch_normalization: true
     name: *name
@@ -40,7 +40,7 @@ compile_kwds:
   #       scale: *max_load
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.001]
+      lr: !store [lr, 0.00001]
   #run_eagerly: true
 
 fit_kwds:
