@@ -25,7 +25,7 @@ compile_kwds:
   loss: !!python/object/apply:bernstein_paper.losses.PinballLoss {}
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.001]
+      lr: !store [lr, 0.0001]
 
 fit_kwds:
   epochs: 150

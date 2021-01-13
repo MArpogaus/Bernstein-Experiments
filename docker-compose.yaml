@@ -6,7 +6,7 @@ services:
     build: .
     container_name: ${USER}-train
     user: ${UID}:${GID}
-    command: tfexp train configs/*bernstein_flow.yaml
+    command: tfexp train configs/
     volumes:
       - ./logs:/app/logs
       - ./configs:/app/configs
@@ -22,7 +22,7 @@ services:
     ports:
       - 8081:8888
     volumes:
-      - ./logs:/app/logs:ro
+      - ./logs:/app/logs
       - ./configs:/app/configs:ro
       - ../paper_data:/paper_data:ro
       - ./ipynb:/app/ipynb
