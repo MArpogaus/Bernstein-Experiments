@@ -16,7 +16,7 @@ model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
     meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
-    output_shape: !!python/tuple [$horizon_size, !sum [4, 15]]
+    output_shape: !!python/tuple [$horizon_size, !sum [4, 10]]
     hidden_layers: !include shared/feed_forward_hidden_layers.yaml
     batch_normalization: true
     name: *name
