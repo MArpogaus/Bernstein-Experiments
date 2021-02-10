@@ -9,6 +9,7 @@ services:
     command: tfexp train configs/
     volumes:
       - ./logs:/app/logs
+      - ./variants:/app/variants
       - ./configs:/app/configs
       - ../paper_data:/paper_data:ro
     environment:
@@ -23,6 +24,7 @@ services:
       - 8081:8888
     volumes:
       - ./logs:/app/logs
+      - ./variants:/app/variants
       - ./configs:/app/configs:ro
       - ../paper_data:/paper_data:ro
       - ./ipynb:/app/ipynb
@@ -35,4 +37,5 @@ services:
     ports:
       - 8082:6006
     volumes:
+      - ./variants:/app/log:variants:ro
       - ./logs:/app/logs:ro
