@@ -44,6 +44,6 @@ compile_kwds:
   #run_eagerly: true
 
 fit_kwds:
-  epochs: 150
+  epochs: 300
   validation_freq: 1
   callbacks: !include shared/callbacks.yaml
