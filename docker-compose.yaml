@@ -37,5 +37,5 @@ services:
     ports:
       - 8082:6006
     volumes:
-      - ./variants:/app/log:variants:ro
+      - ./variants:/app/variants:ro
       - ./logs:/app/logs:ro
