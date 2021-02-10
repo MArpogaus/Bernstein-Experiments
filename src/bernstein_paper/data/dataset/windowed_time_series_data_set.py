@@ -122,8 +122,12 @@ class WindowedTimeSeriesDataSet():
         else:
             ValueError('No data Provided')
 
-        data = encode(data, 'dayofyear')
-        data = encode(data, 'time', data.index.hour * 60 + data.index.minute)
+        if 'dayofyear_sin' in self.columns or 'dayofyear_cos' in self.columns:
+            data = encode(data, 'dayofyear')
+        if 'time_sin' in self.columns or 'time_cos' in self.columns:    
+            data = encode(data, 'time', data.index.hour * 60 + data.index.minute)
+        if 'weekday' in self.columns and not 'weekday' in data.columns:
+            data['weekday']=np.uint8(data.index.weekday)
 
         if self.data_splitter is not None:
             data = self.data_splitter(data)

@@ -1,0 +1,38 @@
+seed: !store [seed, 42]
+name: &name wavenet_bernstein_flow
+
+data_loader: !!python/name:thesis.data.cer_data_loader.load_data
+data_loader_kwds: !include shared/data_loader_kwds.yaml
+
+model_checkpoints: !join 
+  - !store 
+    - base_path
+    - !abspathjoin
+      - ../logs/
+      - *name
+  - '/mcp'
+
+model: !!python/object/apply:thesis.models.wavenet_cnn.build_model
+  kwds:
+    input_shape: !!python/tuple [!sum [$history_size, $horizon_size], 2]
+    output_shape: !!python/tuple [$horizon_size, !sum [4, &M 10]]
+    conv_layers: !include shared/wavenet_conv_layers.yaml
+    hidden_layers: []
+    batch_normalization: false
+    name: *name
+
+compile_kwds:
+  # loss: !!python/object/apply:thesis.losses.BersteinFlowLoss [*M]
+  loss: !!python/object/apply:bernstein_paper.losses.NegativeLogarithmicLikelihood
+    kwds:
+      distribution_class: &distribution_class !!python/name:bernstein_flow.distributions.BernsteinFlow
+      # distribution_class: &distribution_class !!python/object/apply:thesis.distributions.BersteinFlow [*M]
+  optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
+    kwds:
+      lr: !store [lr, 0.00001]
+
+fit_kwds:
+  epochs: 150
+  shuffle: True
+  validation_freq: 1
+  callbacks: !include shared/callbacks.yaml
