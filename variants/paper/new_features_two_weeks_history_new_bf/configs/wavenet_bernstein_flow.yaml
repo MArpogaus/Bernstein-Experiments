@@ -27,7 +27,6 @@ compile_kwds:
     kwds:
       distribution_class: &distribution_class !!python/object/apply:bernstein_flow.util.partial.bernstein_flow
         kwds:
-          second_affine_trafo: false
           softclip: true
   # metrics:
   #   - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
