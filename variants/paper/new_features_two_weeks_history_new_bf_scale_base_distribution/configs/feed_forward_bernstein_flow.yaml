@@ -1,5 +1,5 @@
 seed: !store [seed, 42]
-name: &name wavenet_bernstein_flow
+name: &name feed_forward_bernstein_flow
 
 data_loader: !!python/name:bernstein_paper.data.cer_data_loader.load_data
 data_loader_kwds: !include shared/data_loader_kwds.yaml
@@ -12,14 +12,13 @@ model_checkpoints: !join
       - *name
   - '/mcp'
 
-model: !!python/object/apply:bernstein_paper.models.wavenet_cnn.build_model
+model: !!python/object/apply:bernstein_paper.models.feed_forward.build_model
   kwds:
     history_shape: !!python/tuple [$history_size, 1]
     meta_shape: !!python/tuple [1, !sum [2, 6, 1]]
-    output_shape: !!python/tuple [$horizon_size, !sum [4, 10]]
-    conv_layers: !include shared/wavenet_conv_layers.yaml
-    hidden_layers: !include shared/wavenet_hidden_layers.yaml
-    batch_normalization: false
+    output_shape: !!python/tuple [$horizon_size, 20]
+    hidden_layers: !include shared/feed_forward_hidden_layers.yaml
+    batch_normalization: true
     name: *name
 
 compile_kwds:
@@ -28,7 +27,8 @@ compile_kwds:
       distribution_class: &distribution_class !!python/object/apply:bernstein_flow.util.partial.bernstein_flow
         kwds:
           clip_domain: 4
-          scale_base_distribution: false
+          scale_base_distribution: true 
+
   # metrics:
   #   - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
   #     kwds:
@@ -44,7 +44,7 @@ compile_kwds:
   #       scale: *max_load
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.0001]
+      lr: !store [lr, 0.00001]
   #run_eagerly: true
 
 fit_kwds:

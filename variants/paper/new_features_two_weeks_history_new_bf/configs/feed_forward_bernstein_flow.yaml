@@ -26,7 +26,8 @@ compile_kwds:
     kwds:
       distribution_class: &distribution_class !!python/object/apply:bernstein_flow.util.partial.bernstein_flow
         kwds:
-          softclip: true
+          clip_domain: 4
+          scale_base_distribution: false
   # metrics:
   #   - !!python/object/apply:bernstein_paper.metrics.MeanAbsoluteError
   #     kwds:
