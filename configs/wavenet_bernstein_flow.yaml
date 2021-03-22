@@ -26,9 +26,9 @@ compile_kwds:
   loss: !!python/object/apply:bernstein_paper.losses.NegativeLogarithmicLikelihood
     kwds:
       distribution_class: &distribution_class !!python/name:bernstein_flow.distributions.BernsteinFlow
-  optimizer: 'adam'
-    # kwds:
-      # lr: !store [lr, 0.00001]
+  optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
+    kwds:
+      lr: !store [lr, 0.001]
   #run_eagerly: true
 
 fit_kwds:
