@@ -37,19 +37,21 @@ from absl import logging
 @tf.function
 def trapez(y, x):
     d = x[1:] - x[:-1]
-    return tf.reduce_sum(d * (y[1:] + y[:-1]) / 2., axis=0)
+    return tf.reduce_sum(d * (y[1:] + y[:-1]) / 2.0, axis=0)
+
 
 class ContinuousRankedProbabilityScore(tf.keras.metrics.Mean):
-
-    def __init__(self,
-                 distribution_class,
-                 name='continuous_ranked_probability_score',
-                 scale=1.,
-                 **kwargs):
+    def __init__(
+        self,
+        distribution_class,
+        name="continuous_ranked_probability_score",
+        scale=1.0,
+        **kwargs
+    ):
         super().__init__(name=name, **kwargs)
         self.distribution_class = distribution_class
         self.scale = scale
-        self.tol = 1e-7
+        self.tol = 1e-4
 
     def update_state(self, y_true, pvector, sample_weight=None):
         y_true = tf.squeeze(y_true)
@@ -65,26 +67,27 @@ class ContinuousRankedProbabilityScore(tf.keras.metrics.Mean):
             x_min = dist.quantile(self.tol)
             x_max = dist.quantile(1 - self.tol)
         except:
-            x_min = -10**(2 + y_true // 10)
-            x_max = 10**(2 + y_true // 10)
+            x_min = -(10 ** (2 + y_true // 10))
+            x_max = 10 ** (2 + y_true // 10)
 
         # make sure the bounds haven't clipped the cdf.
-        warning = 'CDF does not meet tolerance requirements at {} extreme(s)!'
+        warning = "CDF does not meet tolerance requirements at {} extreme(s)!"
 
         if tf.math.reduce_any(cdf(x_min) >= self.tol):
-            logging.warning(warning.format('lower'))
-        if tf.math.reduce_any(cdf(x_max) < (1. - self.tol)):
-            logging.warning(warning.format('upper'))
+            logging.warning(warning.format("lower"))
+        if tf.math.reduce_any(cdf(x_max) < (1.0 - self.tol)):
+            logging.warning(warning.format("upper"))
 
             # CRPS = int_-inf^inf (F(y) - H(x))**2 dy
             #      = int_-inf^x F(y)**2 dy + int_x^inf (1 - F(y))**2 dy
+
         def lhs(x):
             # left hand side of CRPS integral
             return tf.square(cdf(x))
 
         def rhs(x):
             # right hand side of CRPS integral
-            return tf.square(1. - cdf(x))
+            return tf.square(1.0 - cdf(x))
 
         lhs_x = tf.linspace(x_min, y_true, n_points)
         lhs_int = trapez(lhs(lhs_x), lhs_x)

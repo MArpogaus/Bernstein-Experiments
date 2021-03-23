@@ -28,7 +28,7 @@ compile_kwds:
       distribution_class: &distribution_class !!python/name:bernstein_flow.distributions.BernsteinFlow
   optimizer: !!python/object/apply:tensorflow.keras.optimizers.Adam
     kwds:
-      lr: !store [lr, 0.001]
+      lr: !store [lr, 0.0001]
   #run_eagerly: true
 
 fit_kwds:
